@@ -2,6 +2,10 @@
 
 面向算法与大模型后训练实习准备的本地练习工具。Python / Rust 双语言算法题，中文背景知识、参考实现、提交历史和复习笔记。无需 npm、数据库服务、付费 API 或网络 CDN。
 
+现已提供 **VS Code 插件（TypeScript + Python 核心）**：原生 Python/Rust 编辑器、题目侧栏、阅读面板、历史差异比较与 SQLite 记录。安装、D 盘存储与迁移说明见 [VS Code 使用说明](docs/VSCODE.md)。网页入口继续保留；两种入口共享同一套业务逻辑。使用插件也无需 npm，npm 仅用于开发与构建。
+
+插件安装包构建后位于 `work/dist/seagull-practice-0.2.0.vsix`。Windows 默认把插件数据、恢复副本和判题临时文件放在 `D:\SeagullPractice`；也可以设置 `seagull.dataDirectory` 沿用本仓库 `data`。仓库中的构建依赖、npm 缓存和隔离测试数据保留在 D 盘项目目录。
+
 ## 启动
 
 需要 **Python 3.10+**。Rust 题还需已安装 **rustc（建议 Rust 1.70+）**，并加入 PATH；Python 题可独立使用。安装工具链需要联网，安装完成后练习平台可以离线使用。

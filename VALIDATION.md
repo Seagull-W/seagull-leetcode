@@ -1,5 +1,7 @@
 # 初版验证记录
 
+VS Code 插件重构的最新验证结果见 [重构验证记录](docs/REFACTOR_VALIDATION.md)：22 项 Python 测试、2 项真实核心通信测试、126 份参考答案与真实扩展宿主验证均通过。下文保留网页初版的验证记录。
+
 验证环境：Windows、Python 3.12.9、rustc 1.97.1（Rust 2021 edition）、浏览器本地界面。
 
 ## 自动检查

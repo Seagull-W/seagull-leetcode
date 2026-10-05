@@ -6,6 +6,9 @@ from pathlib import Path
 import sqlite3
 import uuid
 
+class ConflictError(ValueError): pass
+_UNSET = object()
+
 def now():
     return dt.datetime.now(dt.timezone.utc).isoformat(timespec='milliseconds')
 
@@ -53,9 +56,17 @@ class Store:
             r=db.execute('SELECT * FROM drafts WHERE problem_id=? AND language=?',(pid,lang)).fetchone()
             return dict(r) if r else None
 
-    def save_draft(self,pid,lang,code):
-        stamp=now()
+    def save_draft(self,pid,lang,code,expected=_UNSET):
         with self.connect() as db:
+            db.execute('BEGIN IMMEDIATE')
+            row=db.execute('SELECT updated_at FROM drafts WHERE problem_id=? AND language=?',(pid,lang)).fetchone()
+            current=row['updated_at'] if row else None
+            if expected is not _UNSET and expected!=current:
+                raise ConflictError('草稿已被其他窗口更新；请比较版本后再保存')
+            moment=dt.datetime.now(dt.timezone.utc)
+            if current and moment<=dt.datetime.fromisoformat(current):
+                moment=dt.datetime.fromisoformat(current)+dt.timedelta(microseconds=1)
+            stamp=moment.isoformat(timespec='microseconds')
             db.execute('INSERT INTO drafts VALUES(?,?,?,?) ON CONFLICT(problem_id,language) DO UPDATE SET code=excluded.code,updated_at=excluded.updated_at',(pid,lang,code,stamp))
         return stamp
 

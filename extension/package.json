@@ -1,0 +1,208 @@
+{
+  "name": "seagull-practice",
+  "displayName": "Seagull 本地练习台",
+  "description": "离线 Python / Rust 算法练习、后训练问答、SQLite 记录与复习。",
+  "version": "0.2.0",
+  "publisher": "Seagull-W",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Seagull-W/seagull-leetcode.git"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Education"
+  ],
+  "main": "./out/extension.js",
+  "extensionKind": [
+    "ui"
+  ],
+  "activationEvents": [
+    "onView:seagull.problems"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "可浏览题库和记录；运行代码仅在受信任工作区允许。",
+      "restrictedConfigurations": [
+        "seagull.pythonPath",
+        "seagull.rustcPath",
+        "seagull.dataDirectory"
+      ]
+    },
+    "virtualWorkspaces": {
+      "supported": false
+    }
+  },
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "seagull",
+          "title": "Seagull",
+          "icon": "media/seagull.svg"
+        }
+      ]
+    },
+    "views": {
+      "seagull": [
+        {
+          "id": "seagull.problems",
+          "name": "练习与复习"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "seagull.open",
+        "title": "Seagull: 选择题目",
+        "icon": "$(book)"
+      },
+      {
+        "command": "seagull.run",
+        "title": "Seagull: 运行示例",
+        "icon": "$(play)"
+      },
+      {
+        "command": "seagull.submit",
+        "title": "Seagull: 提交代码",
+        "icon": "$(check)"
+      },
+      {
+        "command": "seagull.language",
+        "title": "Seagull: 切换 Python / Rust",
+        "icon": "$(code)"
+      },
+      {
+        "command": "seagull.filter",
+        "title": "Seagull: 筛选题目",
+        "icon": "$(filter)"
+      },
+      {
+        "command": "seagull.refresh",
+        "title": "Seagull: 刷新记录",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "seagull.export",
+        "title": "Seagull: 导出备份"
+      },
+      {
+        "command": "seagull.import",
+        "title": "Seagull: 导入备份 / 迁移旧记录"
+      },
+      {
+        "command": "seagull.history",
+        "title": "Seagull: 提交历史与恢复"
+      },
+      {
+        "command": "seagull.solution",
+        "title": "Seagull: 查看参考答案 / 比较"
+      },
+      {
+        "command": "seagull.resolveDraft",
+        "title": "Seagull: 比较并解决草稿冲突"
+      },
+      {
+        "command": "seagull.storage",
+        "title": "Seagull: 查看数据目录"
+      },
+      {
+        "command": "seagull.restart",
+        "title": "Seagull: 重启 Python 核心"
+      }
+    ],
+    "configuration": {
+      "title": "Seagull",
+      "properties": {
+        "seagull.pythonPath": {
+          "type": "string",
+          "default": "python",
+          "scope": "machine",
+          "description": "Python 3.10+ 可执行文件；Windows 也可设置为 py。"
+        },
+        "seagull.rustcPath": {
+          "type": "string",
+          "default": "",
+          "scope": "machine",
+          "description": "rustc 路径；留空从 PATH 查找。"
+        },
+        "seagull.dataDirectory": {
+          "type": "string",
+          "default": "",
+          "scope": "machine",
+          "description": "数据、练习文件与临时判题根目录。Windows 有 D 盘时默认 D:\\SeagullPractice；设置新目录不会自动迁移旧记录。"
+        }
+      }
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "seagull.open",
+          "when": "view == seagull.problems",
+          "group": "navigation@1"
+        },
+        {
+          "command": "seagull.filter",
+          "when": "view == seagull.problems",
+          "group": "navigation@2"
+        },
+        {
+          "command": "seagull.language",
+          "when": "view == seagull.problems",
+          "group": "navigation@3"
+        },
+        {
+          "command": "seagull.refresh",
+          "when": "view == seagull.problems",
+          "group": "navigation@4"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "seagull.run",
+          "when": "seagull.isPractice && isWorkspaceTrusted",
+          "group": "navigation@1"
+        },
+        {
+          "command": "seagull.submit",
+          "when": "seagull.isPractice && isWorkspaceTrusted",
+          "group": "navigation@2"
+        },
+        {
+          "command": "seagull.history",
+          "when": "seagull.isPractice",
+          "group": "seagull"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "seagull.submit",
+        "key": "ctrl+enter",
+        "mac": "cmd+enter",
+        "when": "editorTextFocus && seagull.isPractice && isWorkspaceTrusted"
+      },
+      {
+        "command": "seagull.run",
+        "key": "alt+enter",
+        "when": "editorTextFocus && seagull.isPractice && isWorkspaceTrusted"
+      }
+    ]
+  },
+  "scripts": {
+    "build": "node scripts/build.cjs",
+    "test": "npm run build && node --test tests/*.test.cjs",
+    "test:integration": "npm run build && node scripts/integration.cjs",
+    "package": "npm run build && vsce package --no-dependencies --skip-license -o ../work/dist/seagull-practice-0.2.0.vsix",
+    "vscode:prepublish": "npm run build"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "@types/node": "^20.0.0",
+    "@types/vscode": "1.85.0",
+    "@vscode/vsce": "^3.0.0",
+    "@vscode/test-electron": "^2.4.0"
+  }
+}

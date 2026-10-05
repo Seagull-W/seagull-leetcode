@@ -8,3 +8,8 @@ __pycache__/
 *.zip
 *.sqlite*
 .env
+extension/node_modules/
+extension/out/
+extension/python/
+extension/README.md
+*.vsix

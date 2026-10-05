@@ -1,0 +1,25 @@
+:root {color-scheme: light dark;}
+body {margin:0;background:var(--vscode-editor-background);color:var(--vscode-editor-foreground);font-family:var(--vscode-font-family);font-size:var(--vscode-font-size);line-height:1.65;}
+main {max-width:76ch;margin:auto;padding:24px 24px 56px;}
+header {border-bottom:1px solid var(--vscode-panel-border);padding-bottom:18px;}
+.meta {color:var(--vscode-descriptionForeground);font-size:.92em;}
+h1 {font-size:1.8em;line-height:1.3;margin:8px 0 14px;font-weight:600;}
+h2 {font-size:1.3em;margin:26px 0 12px;} h3 {font-size:1.08em;margin:18px 0 8px;}
+p {margin:12px 0;} .actions {display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+button,select,input,textarea {font:inherit;box-sizing:border-box;}
+button {cursor:pointer;border:1px solid transparent;padding:5px 12px;color:var(--vscode-button-foreground);background:var(--vscode-button-background);border-radius:2px;}
+button:hover {background:var(--vscode-button-hoverBackground);} button.secondary {background:var(--vscode-button-secondaryBackground);color:var(--vscode-button-secondaryForeground);}
+button.secondary:hover {background:var(--vscode-button-secondaryHoverBackground);} button:disabled {opacity:.55;cursor:wait;}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible {outline:2px solid var(--vscode-focusBorder);outline-offset:2px;}
+nav {display:flex;flex-wrap:wrap;gap:4px;margin:18px 0 24px;border-bottom:1px solid var(--vscode-panel-border);}
+nav button {background:transparent;color:var(--vscode-foreground);border-radius:0;padding:8px 10px;border-bottom:2px solid transparent;}
+nav button.active {border-bottom-color:var(--vscode-focusBorder);color:var(--vscode-textLink-foreground);}
+nav button:hover {background:var(--vscode-toolbar-hoverBackground);}
+pre {font-family:var(--vscode-editor-font-family);font-size:var(--vscode-editor-font-size);background:var(--vscode-textCodeBlock-background);padding:12px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;border-left:2px solid var(--vscode-panel-border);line-height:1.45;}
+textarea,input,select {color:var(--vscode-input-foreground);background:var(--vscode-input-background);border:1px solid var(--vscode-input-border,transparent);padding:8px;width:100%;}
+textarea {min-height:180px;resize:vertical;line-height:1.6;} label {display:block;margin:18px 0 7px;} .form-row {display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.status {margin-top:12px;color:var(--vscode-descriptionForeground);} .error {color:var(--vscode-errorForeground);} .result {border-top:1px solid var(--vscode-panel-border);margin:24px 0;padding-top:12px;}
+details {margin:12px 0;border-bottom:1px solid var(--vscode-panel-border);padding-bottom:8px;} summary {cursor:pointer;}
+.hint {border-left:2px solid var(--vscode-focusBorder);padding-left:14px;margin:14px 0;}
+.empty {color:var(--vscode-descriptionForeground);padding:24px 0;}
+@media(max-width:460px) {main {padding:16px 14px 32px;} h1 {font-size:1.5em;} .form-row {grid-template-columns:1fr;gap:0;} button {padding:6px 9px;}}

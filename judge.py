@@ -43,7 +43,7 @@ impl<T:SeagullJson> SeagullJson for Vec<T>{
 }
 '''
 
-def execute(command, cwd, timeout):
+def execute(command, cwd, timeout, cancel=None):
     """File-backed capture bounds RAM; kill process tree on Windows timeout."""
     started = time.perf_counter()
     outpath, errpath = Path(cwd)/'stdout.txt', Path(cwd)/'stderr.txt'
@@ -53,11 +53,13 @@ def execute(command, cwd, timeout):
             start_new_session=os.name!='nt')
         expired = False
         oversized = False
+        cancelled = False
         deadline = started + timeout
         while proc.poll() is None:
-            if time.perf_counter() > deadline or outpath.stat().st_size + errpath.stat().st_size > LIMIT:
-                expired = time.perf_counter() > deadline
-                oversized = not expired
+            if (cancel and cancel.is_set()) or time.perf_counter() > deadline or outpath.stat().st_size + errpath.stat().st_size > LIMIT:
+                cancelled = bool(cancel and cancel.is_set())
+                expired = not cancelled and time.perf_counter() > deadline
+                oversized = not cancelled and not expired
                 if os.name == 'nt':
                     subprocess.run(['taskkill','/PID',str(proc.pid),'/T','/F'],
                         stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,creationflags=subprocess.CREATE_NO_WINDOW)
@@ -72,7 +74,7 @@ def execute(command, cwd, timeout):
     stderr = errpath.read_bytes()[:LIMIT].decode('utf-8',errors='replace')
     oversized = oversized or outpath.stat().st_size + errpath.stat().st_size > LIMIT
     return dict(code=proc.returncode, stdout=stdout, stderr=stderr,
-                timeout=expired, oversized=oversized, elapsed=round(elapsed,2))
+                timeout=expired, oversized=oversized, cancelled=cancelled, elapsed=round(elapsed,2))
 
 def equal(actual, expected, unordered=False):
     # JSON bool is not interchangeable with int, even though Python says True == 1.
@@ -86,7 +88,7 @@ def equal(actual, expected, unordered=False):
         return a==e
     return typed(actual)==typed(expected)
 
-def judge(problem, language, code, mode='submit', temp_root=None):
+def judge(problem, language, code, mode='submit', temp_root=None, cancel=None, rustc=None):
     cases = problem['cases'][:2] if mode=='run' else problem['cases']
     marker = 'SEAGULL_'+secrets.token_hex(12)+':'
     base = dict(status='运行错误', passed=0,total=len(cases),execution_ms=0,compile_ms=0,
@@ -104,7 +106,7 @@ def judge(problem, language, code, mode='submit', temp_root=None):
             (folder/'runner.py').write_text(runner,encoding='utf-8')
             command=[sys.executable,'-I','-X','utf8',str(folder/'runner.py')]
         else:
-            compiler=shutil.which('rustc')
+            compiler=rustc or shutil.which('rustc')
             if not compiler:
                 return {**base,'status':'环境缺失','message':'未找到 rustc。安装 Rust 后重新启动平台。'}
             (folder/'solution.rs').write_text(code,encoding='utf-8')
@@ -115,12 +117,13 @@ def judge(problem, language, code, mode='submit', temp_root=None):
             runner='mod solution;\n'+RUST_JSON+'\nfn main(){\n'+'\n'.join(calls)+'\n}\n'
             (folder/'runner.rs').write_text(runner,encoding='utf-8')
             binary=folder/('runner.exe' if os.name=='nt' else 'runner')
-            built=execute([compiler,'--edition=2021','-C','opt-level=1','-o',str(binary),str(folder/'runner.rs')],folder,30)
+            built=execute([compiler,'--edition=2021','-C','opt-level=1','-o',str(binary),str(folder/'runner.rs')],folder,30,cancel)
             base['compile_ms']=built['elapsed']
+            if built['cancelled']: return {**base,'status':'已取消','message':'已取消编译并清理临时文件。'}
             if built['timeout'] or built['code']!=0 or built['oversized']:
                 return {**base,'status':'编译错误','message':'编译超时（30 秒）' if built['timeout'] else 'Rust 编译失败，请查看编译器信息。', 'stderr':built['stderr'][:12000]}
             command=[str(binary)]
-        ran=execute(command,folder,4)
+        ran=execute(command,folder,4,cancel)
         base['execution_ms']=ran['elapsed'];base['stderr']=ran['stderr'][:12000]
         lines=[line[len(marker):] for line in ran['stdout'].splitlines() if line.startswith(marker)]
         malformed=False
@@ -130,7 +133,8 @@ def judge(problem, language, code, mode='submit', temp_root=None):
             case=cases[i];ok=equal(actual,case['expected'],problem.get('unordered',False))
             base['cases'].append(dict(index=i+1,input=case['input'],expected=case['expected'],actual=actual,passed=ok))
             base['passed']+=int(ok)
-        if ran['timeout']: base.update(status='超时',message='整组测试执行超过 4 秒，已终止进程。')
+        if ran['cancelled']: base.update(status='已取消',message='已终止执行并清理临时文件。')
+        elif ran['timeout']: base.update(status='超时',message='整组测试执行超过 4 秒，已终止进程。')
         elif ran['oversized']: base.update(status='输出过多',message='输出超过 256 KB，请减少调试打印。')
         elif ran['code']!=0: base.update(status='运行错误',message='程序异常退出。Python 需要定义 solve，Rust 需要 pub fn solve。')
         elif malformed or len(lines)!=len(cases): base.update(status='运行错误',message='未获得全部有效的返回值，请检查返回类型和输出。')
