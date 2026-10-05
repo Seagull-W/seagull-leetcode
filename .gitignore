@@ -1,0 +1,10 @@
+data/
+work/
+__pycache__/
+*.pyc
+.venv/
+*.exe
+*.pdb
+*.zip
+*.sqlite*
+.env

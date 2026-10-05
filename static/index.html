@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#2765c5">
+  <title>Seagull · 本地练习台</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="/" aria-label="Seagull 练习台首页"><svg viewBox="0 0 40 30" aria-hidden="true"><path d="M3 18 Q12 5 20 17 Q29 5 37 18 M20 17 L20 24"/></svg><span>Seagull<small>本地练习台</small></span></a>
+  <nav aria-label="学习模块"><button class="nav active" data-mode="algorithms">算法练习</button><button class="nav" data-mode="lessons">知识地图</button><button class="nav" data-mode="knowledge">后训练问答</button></nav>
+  <div class="tools"><span class="local-dot">本机存储</span><button id="backupBtn" class="quiet">备份与恢复</button><button id="helpBtn" class="quiet" aria-label="使用帮助">使用说明</button></div>
+</header>
+<div id="bootError" class="boot-error" hidden></div>
+<main class="workspace" id="workspace">
+  <aside class="sidebar" aria-label="题目导航">
+    <div class="sidebar-heading"><h1 id="listHeading">练习路径</h1><span id="count">加载中</span></div>
+    <label class="search-label"><span class="sr-only">搜索题目或专题</span><input id="search" type="search" placeholder="搜索题目、专题…" autocomplete="off"></label>
+    <div id="filters"><label><span class="sr-only">专题筛选</span><select id="topicFilter"><option value="">全部专题</option></select></label><label><span class="sr-only">状态筛选</span><select id="statusFilter"><option value="">全部状态</option><option value="未开始">未开始</option><option value="尝试中">尝试中</option><option value="已通过">已通过</option><option value="待复习">待复习</option><option value="收藏">收藏</option></select></label></div>
+    <div class="progress-wrap" id="progressWrap"><div><span id="progressText">0 / 63 已通过</span><span id="progressLanguage">Python</span></div><progress id="progressBar" max="63" value="0" aria-label="当前语言通过进度"></progress></div>
+    <div id="problemList" class="problem-list" role="list"></div>
+    <div class="sidebar-footer" id="sidebarFooter">先解释思路，再验证代码。</div>
+  </aside>
+  <section class="reading" aria-label="题目与知识">
+    <div id="readingHeader" class="reading-header"></div>
+    <div class="tabs" id="tabs" role="tablist" aria-label="题目内容"><button class="tab active" role="tab" aria-selected="true" data-tab="problem">题目</button><button class="tab" role="tab" aria-selected="false" data-tab="lesson">背景知识</button><button class="tab" role="tab" aria-selected="false" data-tab="solution">提示与解答</button><button class="tab" role="tab" aria-selected="false" data-tab="history">提交记录</button><button class="tab" role="tab" aria-selected="false" data-tab="review">笔记与复习</button></div>
+    <article id="readingBody" class="reading-body" aria-live="polite"><p>正在读取本地题库…</p></article>
+  </section>
+  <section class="coding" id="coding" aria-label="代码编辑和运行">
+    <div class="editor-toolbar"><label for="language">语言</label><select id="language"><option value="python">Python</option><option value="rust">Rust</option></select><span id="saveState" role="status">已保存</span><button id="resetBtn" class="editor-quiet">重置模板</button></div>
+    <div class="code-wrapper"><div class="editor-caption"><span id="filename">solution.py</span><span id="linePosition">第 1 行，第 1 列</span></div><textarea id="editor" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" aria-label="解答代码编辑器" wrap="off"></textarea></div>
+    <div class="runbar"><span>Ctrl + Enter 提交</span><div><button id="runBtn" class="secondary">运行示例</button><button id="submitBtn" class="primary">提交代码</button></div></div>
+    <div class="results-heading"><h2>运行反馈</h2><span id="resultMeta">返回值判题</span></div>
+    <div id="results" class="results" aria-live="polite"><div class="empty-result"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M10 12 L18 20 L10 28 M22 28 L31 28"/></svg><h3>从一个小例子开始</h3><p>运行示例检查接口，提交代码验证全部测试。Python 与 Rust 分别记录进度。</p></div></div>
+  </section>
+</main>
+<div id="toast" class="toast" role="status" hidden></div>
+<dialog id="backupDialog"><form method="dialog" class="dialog-head"><h2>备份与恢复</h2><button aria-label="关闭">关闭</button></form><p>草稿、提交代码、笔记和自评都保存在本机数据库。导出 JSON 可以迁移到另一台电脑。</p><button id="exportBtn" class="primary">导出完整备份</button><hr><label class="file-label" for="importFile">导入 JSON 备份</label><input id="importFile" type="file" accept=".json,application/json"><p class="muted">导入采用合并：提交按 ID 去重，草稿和笔记保留较新版本。导入前自动在 data 目录备份当前记录。</p><div id="importStatus" role="status"></div></dialog>
+</body>
+</html>
