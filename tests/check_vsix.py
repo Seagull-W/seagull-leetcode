@@ -12,7 +12,8 @@ from content.catalog import BY_ID
 def main():
     root = Path(__file__).resolve().parents[1]
     parser = argparse.ArgumentParser()
-    parser.add_argument('package', nargs='?', type=Path, default=root/'work/dist/seagull-practice-0.2.0.vsix')
+    source_manifest = json.loads((root/'extension/package.json').read_text(encoding='utf-8-sig'))
+    parser.add_argument('package', nargs='?', type=Path, default=root/'work/dist'/f'{source_manifest["name"]}-{source_manifest["version"]}.vsix')
     args = parser.parse_args()
     with tempfile.TemporaryDirectory(prefix='vsix-smoke-',dir=root/'work') as directory:
         directory = Path(directory)
@@ -24,6 +25,8 @@ def main():
                 if not (directory/name).resolve().is_relative_to(directory.resolve()): raise ValueError('Unsafe archive path')
             bundle.extractall(directory)
         manifest = json.loads((directory/'extension/package.json').read_text(encoding='utf-8-sig'))
+        assert manifest['version'] == source_manifest['version']
+        assert manifest['publisher'] == source_manifest['publisher']
         assert not manifest.get('dependencies'), 'Runtime package must be self-contained'
         proc = subprocess.Popen([sys.executable,'-u','-X','utf8',str(directory/'extension/python/worker.py'),
                                  '--data-dir',str(directory/'data')],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE)

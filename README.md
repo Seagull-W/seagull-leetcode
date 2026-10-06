@@ -4,7 +4,9 @@
 
 现已提供 **VS Code 插件（TypeScript + Python 核心）**：原生 Python/Rust 编辑器、题目侧栏、阅读面板、历史差异比较与 SQLite 记录。安装、D 盘存储与迁移说明见 [VS Code 使用说明](docs/VSCODE.md)。网页入口继续保留；两种入口共享同一套业务逻辑。使用插件也无需 npm，npm 仅用于开发与构建。
 
-插件安装包构建后位于 `work/dist/seagull-practice-0.2.0.vsix`。Windows 默认把插件数据、恢复副本和判题临时文件放在 `D:\SeagullPractice`；也可以设置 `seagull.dataDirectory` 沿用本仓库 `data`。仓库中的构建依赖、npm 缓存和隔离测试数据保留在 D 盘项目目录。
+插件安装包构建后位于 `work/dist/seagull-practice-<版本>.vsix`。Windows 默认把插件数据、恢复副本和判题临时文件放在 `D:\SeagullPractice`；也可以设置 `seagull.dataDirectory` 沿用本仓库 `data`。仓库中的构建依赖、npm 缓存和隔离测试数据保留在 D 盘项目目录。
+
+推送到 GitHub 会自动测试并打包；版本标签触发 Release 和配置完成后的 Marketplace 发布。发布者注册、身份授权及后续修改步骤见 [发布指南](docs/PUBLISHING.md)。项目使用 [MIT 许可证](LICENSE)。
 
 ## 启动
 

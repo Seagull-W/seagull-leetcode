@@ -5,7 +5,7 @@
 ## 安装与使用
 
 1. 安装 Python 3.10+；做 Rust 题还需 rustc。插件不自动安装语言工具链。
-2. VS Code 扩展面板菜单 → **从 VSIX 安装** → 选择 `seagull-practice-0.2.0.vsix`。
+2. VS Code 扩展面板菜单 → **从 VSIX 安装** → 选择 `seagull-practice-<版本>.vsix`。已发布版本可从仓库的 [Releases](https://github.com/Seagull-W/seagull-leetcode/releases) 下载；Marketplace 上架后也可直接搜索安装。
 3. 点击活动栏 Seagull 图标，在专题树选择题目。编辑器打开 `.py` / `.rs`，旁边显示题面。
 4. 实现 `solve`。`Ctrl+Enter` 提交，`Alt+Enter` 运行示例；macOS 提交为 `Cmd+Enter`。也可使用编辑器工具栏或题面按钮。
 5. “笔记与复习”和后训练问答使用明确的**保存**按钮；未保存表单以 Webview 状态辅助恢复。代码草稿约 600ms 自动同步。
@@ -82,3 +82,11 @@ npm.cmd run package
 使用 F5 调试时以 `extension` 为 VS Code 工作区。集成测试优先使用 `SEAGULL_VSCODE_EXECUTABLE` 指定现有 VS Code，避免下载另一套编辑器。测试数据和用户配置在仓库 `work` 下隔离，不修改日常 VS Code 设置。
 
 仓库根目录 `python -X utf8 server.py --open` 仍可启动网页版本。网页与插件共用 `service.py`、`judge.py`、`store.py` 和题库。
+
+## 更新与隐私
+
+Marketplace 安装后，VS Code 按扩展自动更新设置获取新版本。手动 VSIX 安装可安装新版覆盖旧版。练习数据库在独立数据目录，不随扩展覆盖安装删除；升级前仍建议导出备份。
+
+插件不包含遥测、云账号或网络上传功能。执行 Python / Rust 练习使用本机工具链。题库、运行结果及个人练习记录留在本地。
+
+自动测试和发布配置见仓库的 [发布指南](https://github.com/Seagull-W/seagull-leetcode/blob/main/docs/PUBLISHING.md)。

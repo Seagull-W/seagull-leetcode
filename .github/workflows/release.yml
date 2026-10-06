@@ -1,0 +1,102 @@
+name: Release extension
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing version tag to release or retry (v0.2.1)
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+jobs:
+  metadata:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tag.outputs.value }}
+    steps:
+      - name: Validate tag input
+        id: tag
+        env:
+          TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo 'Invalid version tag'; exit 1; }
+          echo "value=$TAG" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.tag.outputs.value }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Require main ancestry, license, changelog and matching version
+        env:
+          RELEASE_TAG: ${{ steps.tag.outputs.value }}
+        run: node extension/scripts/release-check.cjs --git
+  validate:
+    needs: metadata
+    uses: ./.github/workflows/ci.yml
+    with:
+      ref: ${{ needs.metadata.outputs.tag }}
+  github-release:
+    needs: [metadata, validate]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.metadata.outputs.tag }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: seagull-vsix
+          path: work/dist
+      - name: Create release and attach tested VSIX (retry supported)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.metadata.outputs.tag }}
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" work/dist/*.vsix --clobber
+          else
+            gh release create "$TAG" work/dist/*.vsix --verify-tag --title "$TAG" --notes-file CHANGELOG.md
+          fi
+  marketplace:
+    needs: [metadata, github-release]
+    if: vars.MARKETPLACE_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    environment: marketplace
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.metadata.outputs.tag }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install publishing tool from lockfile
+        working-directory: extension
+        run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: seagull-vsix
+          path: work/dist
+      - name: Check identity configuration
+        env:
+          CLIENT: ${{ vars.AZURE_CLIENT_ID }}
+          TENANT: ${{ vars.AZURE_TENANT_ID }}
+        run: test -n "$CLIENT" && test -n "$TENANT"
+      - uses: azure/login@v3
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          allow-no-subscriptions: true
+      - name: Publish exact tested package
+        working-directory: extension
+        run: npx --no-install vsce publish --azure-credential --packagePath ../work/dist/*.vsix --skip-duplicate

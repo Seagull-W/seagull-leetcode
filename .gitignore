@@ -12,4 +12,7 @@ extension/node_modules/
 extension/out/
 extension/python/
 extension/README.md
+extension/CHANGELOG.md
+extension/LICENSE
+extension/.vscode-test/
 *.vsix

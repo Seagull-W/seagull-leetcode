@@ -2,8 +2,13 @@
   "name": "seagull-practice",
   "displayName": "Seagull 本地练习台",
   "description": "离线 Python / Rust 算法练习、后训练问答、SQLite 记录与复习。",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "publisher": "Seagull-W",
+  "license": "MIT",
+  "icon": "media/icon.png",
+  "homepage": "https://github.com/Seagull-W/seagull-leetcode",
+  "bugs": { "url": "https://github.com/Seagull-W/seagull-leetcode/issues" },
+  "keywords": ["leetcode", "python", "rust", "algorithms", "offline"],
   "repository": {
     "type": "git",
     "url": "https://github.com/Seagull-W/seagull-leetcode.git"
@@ -195,7 +200,8 @@
     "build": "node scripts/build.cjs",
     "test": "npm run build && node --test tests/*.test.cjs",
     "test:integration": "npm run build && node scripts/integration.cjs",
-    "package": "npm run build && vsce package --no-dependencies --skip-license -o ../work/dist/seagull-practice-0.2.0.vsix",
+    "package": "npm run build && node scripts/package.cjs",
+    "release:check": "node scripts/release-check.cjs",
     "vscode:prepublish": "npm run build"
   },
   "devDependencies": {

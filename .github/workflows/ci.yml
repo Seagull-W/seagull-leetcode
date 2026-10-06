@@ -1,0 +1,63 @@
+name: Test and package
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      ref:
+        type: string
+        required: false
+        default: ''
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    env:
+      PYTHONUTF8: '1'
+      SEAGULL_TEST_PYTHON: python
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check Rust
+        run: rustc --version
+      - name: Install dependencies
+        working-directory: extension
+        run: npm ci
+      - name: Python tests
+        run: python -X utf8 -m unittest discover -s tests -p 'test_*.py'
+      - name: Node transport tests
+        working-directory: extension
+        run: npm test
+      - name: All Python and Rust reference answers
+        run: python -X utf8 tests/verify_references.py --report work/ci-references.json
+      - name: Real VS Code integration tests
+        working-directory: extension
+        run: npm run test:integration
+      - name: Package
+        working-directory: extension
+        run: npm run package
+      - name: Verify shipped Python and Rust core
+        run: python -X utf8 tests/check_vsix.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: seagull-vsix
+          path: work/dist/*.vsix
+          if-no-files-found: error
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reference-test-report
+          path: work/ci-references.json
+          if-no-files-found: ignore

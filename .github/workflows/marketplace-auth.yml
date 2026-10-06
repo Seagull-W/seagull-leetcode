@@ -1,0 +1,27 @@
+name: Check Marketplace identity
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  id-token: write
+jobs:
+  identity:
+    runs-on: ubuntu-latest
+    environment: marketplace
+    steps:
+      - name: Check identity configuration
+        env:
+          CLIENT: ${{ vars.AZURE_CLIENT_ID }}
+          TENANT: ${{ vars.AZURE_TENANT_ID }}
+        run: test -n "$CLIENT" && test -n "$TENANT"
+      - uses: azure/login@v3
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          allow-no-subscriptions: true
+      - name: Resolve Marketplace identity ID (no tokens logged)
+        run: |
+          az rest --url https://app.vssps.visualstudio.com/_apis/profile/profiles/me --resource 499b84ac-1321-427f-aa17-267ca6975798 --query id --output tsv > identity-id.txt
+          test -s identity-id.txt
+          echo 'Add this identity as Contributor in your Marketplace publisher:' >> "$GITHUB_STEP_SUMMARY"
+          cat identity-id.txt >> "$GITHUB_STEP_SUMMARY"
