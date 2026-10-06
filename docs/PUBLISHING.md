@@ -34,7 +34,7 @@
 
 若个人 Microsoft 账号无法进入 Entra 管理中心，可先采用 PAT。此路线仅作为过渡：微软已公告 **2026-12-01** 停用 Azure DevOps 全局 PAT；工作流在该日期后明确停止 PAT 发布，避免错误地把它当作长期有效的授权。
 
-1. 打开 [Azure DevOps](https://dev.azure.com)，使用与 Marketplace 发布者相同的 Microsoft 账号。没有组织时按提示创建 Azure DevOps 组织；这是获取 PAT 的入口，不需要开通 Azure 付费订阅。
+1. 打开 [Azure DevOps](https://dev.azure.com)，使用与 Marketplace 发布者相同的 Microsoft 账号。已有组织可直接进入。微软当前要求创建新组织时关联有效 Azure 订阅；若页面要求绑定订阅或付款资料，先反馈该要求，再决定是否继续。不要仅为短期 PAT 路线直接开通付费服务。见 [组织创建的当前条件](https://learn.microsoft.com/en-us/azure/devops/organizations/accounts/create-organization?view=azure-devops)。
 2. 进入组织后，右上角 **User settings → Personal access tokens → New Token**。
 3. 名称可填 `Seagull Marketplace`；Organization 选 **All accessible organizations**；有效期不晚于 **2026-11-30**；Scopes 选 **Custom defined → Show all scopes → Marketplace → Manage**。不要选择全权限。
 4. 创建后将令牌直接填写到 GitHub 仓库 **Settings → Secrets and variables → Actions → Secrets → New repository secret**。Name 为 **VSCE_PAT**，Secret 为刚创建的令牌。不要发送到聊天或写进源码；令牌页面通常只展示一次。
