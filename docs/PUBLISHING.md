@@ -1,5 +1,13 @@
 # 发布与后续维护
 
+## 当前采用的方式
+
+当前选择 **GitHub 自动测试、打包、Release + Marketplace 手动上传**。市场自动发布开关 `MARKETPLACE_ENABLED=false`，暂不继续 Azure / Entra / PAT 授权配置。
+
+每次修改后更新插件版本和 CHANGELOG，提交并推送 main；通过测试后推送对应版本标签。GitHub 自动生成 Release 安装包。下载该版本 VSIX，在 Marketplace 的 Seagull-W 发布者下选择现有扩展，使用 **Update** 上传新版。更新已有扩展，不创建新的扩展条目。
+
+以下身份配置说明保留作为以后需要全自动发布时的参考。
+
 ## 当前流程
 
 - 推送 main、提交 PR 或手动运行 **Test and package**：Windows 上执行 Python 单元测试、Node 传输测试、全部 Python/Rust 参考答案、真实 VS Code 集成测试、VSIX 内置核心检查。通过后保存 `seagull-vsix` 安装包，保留 14 天。
