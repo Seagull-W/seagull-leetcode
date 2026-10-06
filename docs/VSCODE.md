@@ -1,4 +1,4 @@
-# Seagull VS Code 本地练习台
+# Seagull Algorithms & Knowledge
 
 在 VS Code 原生编辑器中练习 Python / Rust，阅读中文题面、背景知识与参考答案，保存历史与复习笔记。包含 63 道双语言算法题、14 篇知识说明和 10 道后训练问答。
 

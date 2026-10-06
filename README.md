@@ -1,4 +1,4 @@
-# Seagull 本地练习台
+# Seagull Algorithms & Knowledge
 
 面向算法与大模型后训练实习准备的本地练习工具。Python / Rust 双语言算法题，中文背景知识、参考实现、提交历史和复习笔记。无需 npm、数据库服务、付费 API 或网络 CDN。
 
