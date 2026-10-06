@@ -22,7 +22,7 @@ function validate(tag, options={}) {
 module.exports={validate};
 if (require.main===module) {
   try {
-    const tag=process.argv[2] || process.env.RELEASE_TAG;
+    const tag=process.argv.slice(2).find(arg=>arg!=='--git') || process.env.RELEASE_TAG;
     validate(tag,{checkGit:process.argv.includes('--git')});
     console.log(`Release metadata OK: ${manifest.publisher}.${manifest.name} ${tag}`);
   } catch(error) {console.error(error.message);process.exitCode=1;}
