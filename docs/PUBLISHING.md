@@ -4,10 +4,10 @@
 
 - 推送 main、提交 PR 或手动运行 **Test and package**：Windows 上执行 Python 单元测试、Node 传输测试、全部 Python/Rust 参考答案、真实 VS Code 集成测试、VSIX 内置核心检查。通过后保存 `seagull-vsix` 安装包，保留 14 天。
 - 推送 `v主版本.次版本.修订号` 标签：**Release extension** 检查标签等于插件版本、提交属于 main 历史、存在许可证和更新记录。重新验证该标签源码，然后上传测试过的 VSIX 到 GitHub Release。
-- 仓库变量 `MARKETPLACE_ENABLED=true` 时，继续使用 Entra OIDC 发布同一份 VSIX 到 Marketplace。未开启时此步骤跳过，GitHub Release 仍可下载。
+- 仓库变量 `MARKETPLACE_ENABLED=true` 时，继续发布同一份 VSIX 到 Marketplace。`MARKETPLACE_AUTH_MODE` 为 `oidc`（默认）时使用 Entra 身份，为 `pat` 时使用 GitHub Secret `VSCE_PAT`。未开启发布时此步骤跳过，GitHub Release 仍可下载。
 - 发布失败可在 Actions → Release extension → Run workflow，填写已有标签重试。版本已存在时跳过 Marketplace 重复发布；不会撤回或覆盖市场现有版本。
 
-首次发布需要所有者完成发布者注册和身份授权；仓库中的 `publisher: Seagull-W` 尚不能证明已经注册该 ID。
+发布者 Seagull-W 已注册，0.2.2 已上架。自动发布还需要配置身份授权。
 
 ## 你需要先完成的操作
 
@@ -26,7 +26,23 @@
 4. **Settings → Secrets and variables → Actions → Variables**，添加 `AZURE_CLIENT_ID`、`AZURE_TENANT_ID`。这些是身份标识，不是密码。先不要开启 `MARKETPLACE_ENABLED`。
 5. GitHub **Actions → Check Marketplace identity → Run workflow**，选择 main。它验证 OIDC 登录并调用官方 Marketplace 身份接口，成功后在运行 Summary 输出身份 ID，不输出访问令牌。此 ID 不能直接假定等于应用 client ID 或 Entra object ID。失败时反馈错误信息；不需要发送任何访问令牌。
 6. Marketplace 发布者管理页 → **Members**，添加上一步身份 ID，角色 **Contributor**。这是市场发布权限；Azure 订阅中的 Reader/Contributor 角色不能替代它。若页面不接受身份，请保留错误信息并反馈，勿创建或泄露新的密钥。
-7. 完成授权后，在仓库 Actions Variables 添加 `MARKETPLACE_ENABLED=true`。推送一个版本标签或重试尚未上架的版本；检查 Marketplace 发布 job 成功，并验证扩展公开页面。
+7. 再次运行 **Check Marketplace identity**，勾选 **verify_publisher**。这次还会检查 Publisher 发布权限，不上传或修改扩展。成功后再在仓库 Actions Variables 添加 `MARKETPLACE_ENABLED=true`。推送一个版本标签或重试已有版本；版本已存在时会跳过重复发布。检查 Marketplace 发布 job 成功，并验证扩展公开页面。
+
+当前市场中已确认 **Seagull-W.seagull-practice 0.2.2**，名称为 **Seagull Algorithms & Knowledge**。GitHub 的 `marketplace` Environment 已建立；账号授权与变量配置需要继续完成。
+
+## 个人账号的临时 PAT 路线
+
+若个人 Microsoft 账号无法进入 Entra 管理中心，可先采用 PAT。此路线仅作为过渡：微软已公告 **2026-12-01** 停用 Azure DevOps 全局 PAT；工作流在该日期后明确停止 PAT 发布，避免错误地把它当作长期有效的授权。
+
+1. 打开 [Azure DevOps](https://dev.azure.com)，使用与 Marketplace 发布者相同的 Microsoft 账号。没有组织时按提示创建 Azure DevOps 组织；这是获取 PAT 的入口，不需要开通 Azure 付费订阅。
+2. 进入组织后，右上角 **User settings → Personal access tokens → New Token**。
+3. 名称可填 `Seagull Marketplace`；Organization 选 **All accessible organizations**；有效期不晚于 **2026-11-30**；Scopes 选 **Custom defined → Show all scopes → Marketplace → Manage**。不要选择全权限。
+4. 创建后将令牌直接填写到 GitHub 仓库 **Settings → Secrets and variables → Actions → Secrets → New repository secret**。Name 为 **VSCE_PAT**，Secret 为刚创建的令牌。不要发送到聊天或写进源码；令牌页面通常只展示一次。
+5. 仓库 Actions Variables 设置 **MARKETPLACE_AUTH_MODE=pat**。先运行 **Check Marketplace identity**，PAT 模式会直接检查 Seagull-W 的发布权限，不上传扩展。
+6. 权限检查成功后再设置 **MARKETPLACE_ENABLED=true**。可手动运行 **Release extension**，填写 `v0.2.2` 验证已有版本的幂等发布；版本已存在时跳过。下一次版本标签会上传新版本。
+7. PAT 过期或撤销后，重新创建具有相同范围的令牌并替换 GitHub Secret。2026-12-01 前迁移到 Entra：完成前文授权后，把模式改为 `oidc`，验证成功后删除旧的 VSCE_PAT。
+
+微软当前对新 Workforce 租户的创建存在账号和订阅限制；无法注册应用时，先反馈实际限制，不应为此盲目开通付费服务。参见 [创建租户的当前条件](https://learn.microsoft.com/en-us/entra/fundamentals/create-new-tenant) 和 [全局 PAT 退休公告](https://devblogs.microsoft.com/devops/retirement-of-global-personal-access-tokens-in-azure-devops/)。
 
 OIDC 的登录和市场权限需要分别验证。尚未配置账号时只能验证构建流程，不能承诺发布身份已可用。官方已公告 Azure DevOps 全局 PAT 于 **2026-12-01** 退休，因此本流程采用 Entra，而非长期保存全局 PAT。
 

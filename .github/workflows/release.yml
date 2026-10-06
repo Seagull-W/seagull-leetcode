@@ -70,6 +70,8 @@ jobs:
     if: vars.MARKETPLACE_ENABLED == 'true'
     runs-on: ubuntu-latest
     environment: marketplace
+    env:
+      AUTH_MODE: ${{ vars.MARKETPLACE_AUTH_MODE || 'oidc' }}
     permissions:
       contents: read
       id-token: write
@@ -91,12 +93,32 @@ jobs:
         env:
           CLIENT: ${{ vars.AZURE_CLIENT_ID }}
           TENANT: ${{ vars.AZURE_TENANT_ID }}
-        run: test -n "$CLIENT" && test -n "$TENANT"
+          TOKEN: ${{ secrets.VSCE_PAT }}
+        run: |
+          case "$AUTH_MODE" in
+            oidc) test -n "$CLIENT" && test -n "$TENANT" || { echo '::error::Set AZURE_CLIENT_ID and AZURE_TENANT_ID'; exit 1; } ;;
+            pat)
+              [[ "$(date -u +%Y-%m-%d)" < '2026-12-01' ]] || { echo '::error::Global PATs are retired; migrate to OIDC'; exit 1; }
+              test -n "$TOKEN" || { echo '::error::Add repository secret VSCE_PAT'; exit 1; }
+              ;;
+            *) echo '::error::MARKETPLACE_AUTH_MODE must be oidc or pat'; exit 1 ;;
+          esac
       - uses: azure/login@v3
+        if: env.AUTH_MODE == 'oidc'
         with:
           client-id: ${{ vars.AZURE_CLIENT_ID }}
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
           allow-no-subscriptions: true
       - name: Publish exact tested package
         working-directory: extension
-        run: npx --no-install vsce publish --azure-credential --packagePath ../work/dist/*.vsix --skip-duplicate
+        env:
+          VSCE_PAT: ${{ env.AUTH_MODE == 'pat' && secrets.VSCE_PAT || '' }}
+        run: |
+          PUBLISHER=$(node -p "require('./package.json').publisher")
+          if [ "$AUTH_MODE" = oidc ]; then
+            npx --no-install vsce verify-pat "$PUBLISHER" --azure-credential
+            npx --no-install vsce publish --azure-credential --packagePath ../work/dist/*.vsix --skip-duplicate
+          else
+            npx --no-install vsce verify-pat "$PUBLISHER"
+            npx --no-install vsce publish --packagePath ../work/dist/*.vsix --skip-duplicate
+          fi

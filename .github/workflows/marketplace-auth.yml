@@ -1,6 +1,11 @@
 name: Check Marketplace identity
 on:
   workflow_dispatch:
+    inputs:
+      verify_publisher:
+        description: Also verify publisher permission after adding the identity as Contributor
+        type: boolean
+        default: false
 permissions:
   contents: read
   id-token: write
@@ -8,20 +13,58 @@ jobs:
   identity:
     runs-on: ubuntu-latest
     environment: marketplace
+    env:
+      AUTH_MODE: ${{ vars.MARKETPLACE_AUTH_MODE || 'oidc' }}
     steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        if: inputs.verify_publisher || env.AUTH_MODE == 'pat'
+        with:
+          node-version: '22'
       - name: Check identity configuration
         env:
           CLIENT: ${{ vars.AZURE_CLIENT_ID }}
           TENANT: ${{ vars.AZURE_TENANT_ID }}
-        run: test -n "$CLIENT" && test -n "$TENANT"
+          TOKEN: ${{ secrets.VSCE_PAT }}
+        run: |
+          case "$AUTH_MODE" in
+            oidc)
+              test -n "$CLIENT" || { echo '::error::Set repository variable AZURE_CLIENT_ID'; exit 1; }
+              test -n "$TENANT" || { echo '::error::Set repository variable AZURE_TENANT_ID'; exit 1; }
+              ;;
+            pat)
+              [[ "$(date -u +%Y-%m-%d)" < '2026-12-01' ]] || { echo '::error::Global PATs are retired; migrate to OIDC'; exit 1; }
+              test -n "$TOKEN" || { echo '::error::Add repository secret VSCE_PAT'; exit 1; }
+              ;;
+            *) echo '::error::MARKETPLACE_AUTH_MODE must be oidc or pat'; exit 1 ;;
+          esac
       - uses: azure/login@v3
+        if: env.AUTH_MODE == 'oidc'
         with:
           client-id: ${{ vars.AZURE_CLIENT_ID }}
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
           allow-no-subscriptions: true
       - name: Resolve Marketplace identity ID (no tokens logged)
+        if: env.AUTH_MODE == 'oidc'
         run: |
           az rest --url https://app.vssps.visualstudio.com/_apis/profile/profiles/me --resource 499b84ac-1321-427f-aa17-267ca6975798 --query id --output tsv > identity-id.txt
           test -s identity-id.txt
           echo 'Add this identity as Contributor in your Marketplace publisher:' >> "$GITHUB_STEP_SUMMARY"
           cat identity-id.txt >> "$GITHUB_STEP_SUMMARY"
+      - name: Install publisher verification tool
+        if: inputs.verify_publisher || env.AUTH_MODE == 'pat'
+        working-directory: extension
+        run: npm ci
+      - name: Verify Marketplace publisher authorization (no publication)
+        if: inputs.verify_publisher || env.AUTH_MODE == 'pat'
+        working-directory: extension
+        env:
+          VSCE_PAT: ${{ env.AUTH_MODE == 'pat' && secrets.VSCE_PAT || '' }}
+        run: |
+          PUBLISHER=$(node -p "require('./package.json').publisher")
+          if [ "$AUTH_MODE" = oidc ]; then
+            npx --no-install vsce verify-pat "$PUBLISHER" --azure-credential
+          else
+            npx --no-install vsce verify-pat "$PUBLISHER"
+          fi
+          echo 'Publisher authorization verified. Automatic publishing can now be enabled.' >> "$GITHUB_STEP_SUMMARY"
