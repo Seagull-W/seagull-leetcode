@@ -22,7 +22,7 @@
 
 1. [Microsoft Entra 管理中心](https://entra.microsoft.com) → **App registrations → New registration**，创建用于 Seagull Marketplace 发布的应用。记录 **Application (client) ID** 和 **Directory (tenant) ID**。不要创建 client secret。
 2. 在应用的 **Certificates & secrets → Federated credentials → Add credential**，选择 GitHub Actions。组织/所有者 `Seagull-W`，仓库 `seagull-leetcode`，实体类型 **Environment**，名称 **marketplace**。Issuer 为 `https://token.actions.githubusercontent.com`，Audience 为 `api://AzureADTokenExchange`。Subject 必须精确等于 `repo:Seagull-W/seagull-leetcode:environment:marketplace`，大小写也须相同；不要在可选 owner/repository ID 字段加入数字 ID。
-3. GitHub 仓库 **Settings → Environments → New environment**，创建 `marketplace`。可将允许部署的标签限制为 `v*`；若设置 required reviewers，每次发布会等待你的审核。
+3. GitHub 仓库 **Settings → Environments → New environment**，创建 `marketplace`。初次身份检查从 main 运行，应允许 main；检查完成后可将部署限制为 `v*` 标签（需要再次从 main 诊断时再允许 main）。若设置 required reviewers，每次发布会等待你的审核。
 4. **Settings → Secrets and variables → Actions → Variables**，添加 `AZURE_CLIENT_ID`、`AZURE_TENANT_ID`。这些是身份标识，不是密码。先不要开启 `MARKETPLACE_ENABLED`。
 5. GitHub **Actions → Check Marketplace identity → Run workflow**，选择 main。它验证 OIDC 登录并调用官方 Marketplace 身份接口，成功后在运行 Summary 输出身份 ID，不输出访问令牌。此 ID 不能直接假定等于应用 client ID 或 Entra object ID。失败时反馈错误信息；不需要发送任何访问令牌。
 6. Marketplace 发布者管理页 → **Members**，添加上一步身份 ID，角色 **Contributor**。这是市场发布权限；Azure 订阅中的 Reader/Contributor 角色不能替代它。若页面不接受身份，请保留错误信息并反馈，勿创建或泄露新的密钥。
